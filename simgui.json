@@ -1,0 +1,20 @@
+{
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/SmartDashboard/Arm Angle": "Mechanism2d",
+      "/SmartDashboard/Arm Velocity": "Mechanism2d",
+      "/SmartDashboard/Mech2d": "Mechanism2d"
+    },
+    "windows": {
+      "/SmartDashboard/Arm Angle": {
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  },
+  "NetworkTables Info": {
+    "visible": true
+  }
+}
