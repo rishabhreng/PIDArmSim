@@ -36,10 +36,12 @@ import static edu.wpi.first.units.Units.Volts;
 
 public class Arm extends SubsystemBase {
 
+  // hardware/simulation motor models
   TalonFX armMotor = new TalonFX(0);
   TalonFXSimState armMotorSim = new TalonFXSimState(armMotor);
   DCMotorSim armModel = new DCMotorSim(DCMotor.getKrakenX60(1), 1.0, 0.01);
 
+  // dashboard Mechanisms for visualization 
   final Mechanism2d angleMech = new Mechanism2d(1, 1);
   final MechanismRoot2d angleRoot = angleMech.getRoot("center", 0.5, 0.5);
   final MechanismLigament2d armAngleMech = angleRoot.append(new MechanismLigament2d("arm", 0.3, 0.0));
@@ -52,12 +54,15 @@ public class Arm extends SubsystemBase {
   final MechanismLigament2d armTargetVelMech = velRoot.append(
     new MechanismLigament2d("armTarget", 0, 180, 6.0, new Color8Bit(0, 255, 0)));
 
+  // control mode
   ControlMode controlMode = ControlMode.Position;
 
+  // control signals
   MotionMagicVoltage posReq = new MotionMagicVoltage(0.0); // kV=0.112, kP=0.9, kI=0.0, kD=0.0, kS=0.0
   MotionMagicVelocityVoltage velReq = new MotionMagicVelocityVoltage(0.0); // kV=0.112, kP=0.9, kI=0.0, kD=0.0, kS=0.0
-  VoltageOut voltageReq = new VoltageOut(0.0);
+  VoltageOut sysIdVoltageRequest = new VoltageOut(0.0);
 
+  // sysid routine
   SysIdRoutine armSysIdRoutine = new SysIdRoutine(
     new SysIdRoutine.Config(
       null,
@@ -65,8 +70,9 @@ public class Arm extends SubsystemBase {
       null,
       state -> SignalLogger.writeString("state", state.toString())
     ),
-    new SysIdRoutine.Mechanism((Measure<Voltage> volts) -> armMotor.setControl(voltageReq.withOutput(volts.in(Volts))), null, this));
+    new SysIdRoutine.Mechanism((Measure<Voltage> volts) -> armMotor.setControl(sysIdVoltageRequest.withOutput(volts.in(Volts))), null, this));
 
+  // tunable numbers on dashboard
   TunableNumber kP = new TunableNumber("kP");
   TunableNumber kI = new TunableNumber("kI");
   TunableNumber kD = new TunableNumber("kD");
@@ -77,21 +83,17 @@ public class Arm extends SubsystemBase {
   public Arm() {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
-    posConfigs.kP = Constants.defaultkPPos;
-    posConfigs.kI = Constants.defaultkIPos;
-    posConfigs.kD = Constants.defaultkDPos;
-    posConfigs.kV = Constants.defaultkV;
-    posConfigs.kS = Constants.defaultkS;
-    posConfigs.kA = Constants.defaultkA;
-    posConfigs.kG = Constants.defaultkG;
+    posConfigs.kP = Constants.defkPPos;
+    posConfigs.kI = Constants.defkIPos;
+    posConfigs.kD = Constants.defkDPos;
+    posConfigs.kG = Constants.defkG;
 
-    velConfigs.kP = Constants.defaultkPVel;
-    velConfigs.kI = Constants.defaultkIVel;
-    velConfigs.kD = Constants.defaultkDVel;
-    velConfigs.kV = Constants.defaultkV;
-    velConfigs.kS = Constants.defaultkS;
-    velConfigs.kA = Constants.defaultkA;
-    velConfigs.kG = Constants.defaultkG;
+    velConfigs.kP = Constants.defkPVel;
+    velConfigs.kI = Constants.defkIVel;
+    velConfigs.kD = Constants.defkDVel;
+    velConfigs.kV = Constants.defkV;
+    velConfigs.kS = Constants.defkS;
+    velConfigs.kG = Constants.defkG;
 
     config.Slot0 = posConfigs;
     config.Slot1 = velConfigs;
@@ -112,13 +114,13 @@ public class Arm extends SubsystemBase {
 
     // post the tunable numbers to the dashboard
     if (controlMode == ControlMode.Position) {
-      kP.setDefault(Constants.defaultkPPos);
-      kI.setDefault(Constants.defaultkIPos);
-      kD.setDefault(Constants.defaultkDPos);
+      kP.setDefault(Constants.defkPPos);
+      kI.setDefault(Constants.defkIPos);
+      kD.setDefault(Constants.defkDPos);
     } else {
-      kP.setDefault(Constants.defaultkPVel);
-      kI.setDefault(Constants.defaultkIVel);
-      kD.setDefault(Constants.defaultkDVel);
+      kP.setDefault(Constants.defkPVel);
+      kI.setDefault(Constants.defkIVel);
+      kD.setDefault(Constants.defkDVel);
     }
     
     BaseStatusSignal.setUpdateFrequencyForAll(250,
@@ -127,8 +129,6 @@ public class Arm extends SubsystemBase {
         armMotor.getMotorVoltage());
     
     armMotor.optimizeBusUtilization();
-
-    SignalLogger.start();
   }
 
   @Override
